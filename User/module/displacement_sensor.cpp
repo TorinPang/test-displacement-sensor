@@ -246,7 +246,16 @@ float DisplacementSensor::Position() const
     return delta * static_cast<int32_t>(cfg.direction) * cfg.resolution_mm_per_count;
 }
 
-void DisplacementSensor::SetZero()
+void DisplacementSensor::SetZeroHard()
+{
+    if (SendInstruction(InstructionType::SetZero))
+    {
+        cfg.zero_count = 0U;
+        raw_count = 0U;
+    }
+}
+
+void DisplacementSensor::SetZeroSoft()
 {
     cfg.zero_count = raw_count;
 }

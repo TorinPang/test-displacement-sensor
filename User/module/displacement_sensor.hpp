@@ -34,7 +34,7 @@ enum class InstructionType : uint8_t
     /* ---------------- 常用：标定与回传方式 ---------------- */
     SetMode = 0x04,           ///< 设查询/回传模式。DATA：00=查询；AA=自动回传位置；02=自动回传速度
     SetReportPeriod = 0x05,   ///< 设自动回传周期。DATA 为**小端** u16，单位 us（50~65535）
-    SetZero = 0x06,           ///< 当前位置设为零。DATA=00；应答 LEN=4，状态 0=成功 TODO现在只有软的
+    SetZero = 0x06,           ///< 当前位置设为零。DATA=00；应答 LEN=4，状态 0=成功
     SetDirection = 0x07,      ///< 设递增方向。DATA：00=顺时针；01=逆时针
     SetNodeId = 0x02,         ///< 设标准节点地址。DATA 为 1~255；**应答会用新地址回**，注意改本地 id
     SetBaudRate = 0x03,       ///< 设波特率。DATA：00=500K 01=1M 02=250K 03=125K 04=100K；改完主机也要跟着改
@@ -113,10 +113,7 @@ public:
         uint8_t node_id = 1;               ///< 节点地址：CAN ID 与 data[1] 都用它
         uint16_t poll_period_ms = 30;      ///< 轮询周期：查询模式下必须自己发读指令（20~50ms）
         uint16_t timeout_ms = 100;         ///< 超过这么久没应答判离线（≈3 个周期）
-        /* 500mm 量程 / 轮周长 100mm → 5 圈；1024ppr 时满量程 = 5120 counts。
-         * 精确值 100/1024 = 0.09765625；手册标的 0.098 是四舍五入，
-         * 用 0.098 算满量程会得到 501.8mm（差 1.8mm）。要精确就换成 0.09765625f。*/
-        float resolution_mm_per_count = 100.0/1024;  ///< mm/count，见上方说明
+        float resolution_mm_per_count = 100.0/4096.0f;  ///< mm/count，见上方说明
         int8_t direction = 1;                    ///< 拉出为 +1；装反了改 -1，不用动代码
         /* 手册建议预置 1000（≈98mm 反向余量）。注意代价：正向只剩 5120-1000=4120 counts
          * ≈403mm。要把 500mm 全行程都算作正位移，就把它设 0（或全收绳后调 SetZero()）。*/
@@ -272,12 +269,18 @@ public:
     float Position() const;
 
     /**
+     *  @brief 硬件层面上把当前位置当成零点，断电仍保持
+     *  @note
+     */
+    void SetZeroHard();
+
+    /**
      * @brief 把当前位置记为软零点：zero_count = raw_count（只写 RAM，掉电即失效）。
      * @note  软零点不动传感器内部计数，所以多圈绝对值不会丢；需要掉电保持就把
      *        zero_count 存 Flash，或改用 0x06 指令做硬件置零（后者要同步把本地
      *        zero_count/raw_count 一起清 0，否则位置会跳变）。
      */
-    void SetZero();
+    void SetZeroSoft();
 
 private:
     DisplacementSensor() = default;
