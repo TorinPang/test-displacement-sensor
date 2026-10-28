@@ -1,4 +1,5 @@
 #include "bsp_can.hpp"
+#include "displacement_sensor.hpp"
 
 /* 本模块的统计量，供 Debug（Live Watch）观察 */
 volatile CAN_Stat_t g_can_stat = {0};
@@ -76,15 +77,6 @@ bool CAN_Transmit(CAN_HandleTypeDef *hcan, uint32_t Id, const uint8_t *msg, uint
     return true;
 }
 
-__attribute__((weak)) void CAN_RxCallback(CAN_HandleTypeDef *hcan, uint32_t StdId, uint8_t *data, uint16_t len)
-{
-    // 默认实现为空，用户可以在上层模块中实现同名函数来处理接收到的CAN报文
-    UNUSED(hcan);
-    UNUSED(StdId);
-    UNUSED(data);
-    UNUSED(len);
-}
-
 extern "C" void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
     CAN_RxHeaderTypeDef rx_header = {0};
@@ -108,7 +100,10 @@ extern "C" void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
     g_can_stat.rx_frames++;
 
-    CAN_RxCallback(hcan, rx_header.StdId, rx_data, len);
+    DisplacementSensor *s = DisplacementSensor::Instance();
+    if (hcan != s->cfg.hcan || rx_header.StdId != s->cfg.node_id)
+        return;
+    s->OnFrame(rx_data, len);
 }
 
 /**

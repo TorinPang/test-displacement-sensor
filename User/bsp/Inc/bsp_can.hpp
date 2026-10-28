@@ -52,20 +52,6 @@ bool CAN_Init(void);
  */
 bool CAN_Transmit(CAN_HandleTypeDef *hcan, uint32_t Id, const uint8_t *msg, uint16_t len);
 
-/**
- * @brief CAN 接收数据出口（弱符号，上层可实现同名函数覆盖）。
- * @note  由 bsp_can.cpp 的 HAL_CAN_RxFifo0MsgPendingCallback 在收到「标准 + 数据帧」后调用，
- *        用来把报文交给上层模块。本文件在 bsp_can.cpp 内有空实现做默认，
- *        上层未实现时调用也不会落到非法地址。
- *        **本回调运行在中断上下文**：不要在这里 printf / HAL_Delay / 加会阻塞的锁；
- *        要交给线程处理请用 tx_queue_send(..., TX_NO_WAIT)。
- * @param hcan  收到报文的 CAN 句柄（hcan1 / hcan2）
- * @param StdId 标准帧 ID
- * @param data  报文数据（指向中断栈上的临时缓冲，**只在回调内有效**，需要保留请自行拷贝）
- * @param len   报文数据长度（即 DLC，0~8）；只应使用 data[0..len-1]
- */
-__attribute__((weak)) void CAN_RxCallback(CAN_HandleTypeDef *hcan, uint32_t StdId, uint8_t *data, uint16_t len);
-
 #ifdef __cplusplus
 }
 #endif

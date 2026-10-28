@@ -51,12 +51,14 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         User/bsp/Src/bsp_can.cpp
         User/bsp/Src/bsp_led.cpp
         User/bsp/Src/bsp.cpp
+        User/module/displacement_sensor.cpp
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
         User/bsp/Inc
+        User/module
 )
 
 # Add project symbols (macros)
