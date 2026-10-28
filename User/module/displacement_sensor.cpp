@@ -179,8 +179,8 @@ void DisplacementSensor::OnFrame(const uint8_t *data, uint16_t len)
         vel_rx_count++;
         break;
     default:  //目前其他指令都是设置指令，最后一位都是0x00表示成功，其他表示失败
+        // 已经确认一下自动回传对应的指令码是0x04还是对应的0x01、0x0A
         //TODO :将非ID更改的设置移到接收后完成
-        //TODO :确认一下自动回传对应的指令码是0x04还是对应的0x01、0x0A
         if (data[kIdxLen] != kRespLenAck || len < kRespLenAck)
         {
             err_count++;

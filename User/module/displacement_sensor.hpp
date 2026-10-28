@@ -214,7 +214,7 @@ public:
 
     /**
      * @brief 修改编码器自动回传的时间
-     * @param new_time 新的自动回传时间（单位ms）
+     * @param new_time 新的自动回传时间（单位us）
      * @return true 已发出（切换结果看 last_status）
      */
     bool SetReportPeriod(uint16_t new_time);
