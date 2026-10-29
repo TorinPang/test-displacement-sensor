@@ -36,15 +36,18 @@ enum class InstructionType : uint8_t
     SetReportPeriod = 0x05,   ///< 设自动回传周期。DATA 为**小端** u16，单位 us（50~65535）
     SetZero = 0x06,           ///< 当前位置设为零。DATA=00；应答 LEN=4，状态 0=成功
     SetDirection = 0x07,      ///< 设递增方向。DATA：00=顺时针；01=逆时针
-    SetNodeId = 0x02,         ///< 设标准节点地址。DATA 为 1~255；**应答会用新地址回**，注意改本地 id
     SetBaudRate = 0x03,       ///< 设波特率。DATA：00=500K 01=1M 02=250K 03=125K 04=100K；改完主机也要跟着改
     SetVelocitySampleTime = 0x0B, ///< 设速度采样时间。DATA 为**大端** u16，单位 ms（1~65535）
+    SetCurrentNum = 0x0D,        ///< 设当前位置计数。DATA 为**大端** u32，
 
     /* ---------------- 以下本工程暂不使用，留档备查 ----------------
+     *   0x02 设标准节点地址。DATA 为 1~255，**应答会用新地址回**。
+     *        本工程不使用：这条指令一旦在总线上丢了（或传感器没执行），主机若同步改了本地地址
+     *        就会对着一个没人应答的 ID 说话 -> 永久失联。要支持它必须做成
+     *        "先发帧、等新地址回来的确认帧、确认到了才提交本地地址"的过渡态机制。
      *   0x22 设扩展地址（ID > 255）。请求 LEN=07、地址**大端** u32；应答为**扩展帧**，
      *        32 位状态**大端**，LEN=07。（说明书这一条的长度/端序写错过，以此为准）
      *   0x0C 当前位置设为中点。DATA=01
-     *   0x0D 设当前位置计数。DATA 为**大端** u32
      *   0x0F 当前位置设为五圈值。DATA=01
      */
 };
@@ -206,13 +209,6 @@ public:
     bool SetDirection(SensorDirection dir);
 
     /**
-     * @brief 改节点地址。
-     * @warning 成功后传感器立刻用新地址应答，`cfg.node_id` 必须同步更新，否则永久失联。
-     *          调试阶段先别碰这条，等位置读通了再动。
-     */
-    bool SetNodeId(uint8_t new_id);
-
-    /**
      * @brief 修改编码器自动回传的时间
      * @param new_time 新的自动回传时间（单位us）
      * @return true 已发出（切换结果看 last_status）
@@ -232,6 +228,13 @@ public:
      *          否则当场失联。**建议最后再做，且先准备好恢复流程。**
      */
     bool SetBaudRate(SensorBaudCode code);
+
+    /**
+     * @brief 改当前位置计数（0x0D 指令）。
+     * @param new_count 新的计数值（**大端** u32）
+     * @retval true 已发出（切换结果看 last_status）
+     */
+    bool SetCurrentNum(uint32_t new_count);
 
     /**
      * @brief 处理一帧收到的报文。**在中断上下文调用**，只做校验与存值。

@@ -96,17 +96,6 @@ bool DisplacementSensor::SetDirection(SensorDirection dir)
     return SendInstruction(InstructionType::SetDirection, &param, 1U);
 }
 
-bool DisplacementSensor::SetNodeId(uint8_t new_id)
-{
-    if (SendInstruction(InstructionType::SetNodeId, &new_id, 1U))
-    {   //TODO 看看有没有必要加一个last_id，防止丢数据
-        cfg.node_id = new_id;
-        return true;
-    }
-    else
-        return false;
-}
-
 bool DisplacementSensor::SetReportPeriod(uint16_t new_time)
 {
     const uint8_t param[2] = {static_cast<uint8_t>(new_time & 0xFF), static_cast<uint8_t>(new_time >> 8)};
@@ -130,6 +119,13 @@ bool DisplacementSensor::SetBaudRate(SensorBaudCode code)
     const uint8_t param = static_cast<uint8_t>(code);
     return SendInstruction(InstructionType::SetBaudRate, &param, 1U);
     //TODO 修改主机波特率
+}
+
+bool DisplacementSensor::SetCurrentNum(uint32_t new_count)
+{
+    const uint8_t param[4] = {static_cast<uint8_t>(new_count >> 24), static_cast<uint8_t>((new_count >> 16) & 0xFF),
+                              static_cast<uint8_t>((new_count >> 8) & 0xFF), static_cast<uint8_t>(new_count & 0xFF)};
+    return SendInstruction(InstructionType::SetCurrentNum, param, 4U);
 }
 
 void DisplacementSensor::OnFrame(const uint8_t *data, uint16_t len)
