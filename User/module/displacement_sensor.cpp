@@ -35,7 +35,7 @@ bool DisplacementSensor::Init(const Config &config)
     prev_stamp_ms_ = 0;
     prev_position_mm_ = 0.0f;
     prev_raw_count_ = 0;
-    velocity_sample_time = 1000U;
+    velocity_sample_time = 30U;
     return SetVelocitySampleTime(velocity_sample_time);
 }
 
@@ -118,14 +118,19 @@ bool DisplacementSensor::SetBaudRate(SensorBaudCode code)
 {
     const uint8_t param = static_cast<uint8_t>(code);
     return SendInstruction(InstructionType::SetBaudRate, &param, 1U);
-    //TODO 修改主机波特率
 }
 
 bool DisplacementSensor::SetCurrentNum(uint32_t new_count)
 {
     const uint8_t param[4] = {static_cast<uint8_t>(new_count >> 24), static_cast<uint8_t>((new_count >> 16) & 0xFF),
                               static_cast<uint8_t>((new_count >> 8) & 0xFF), static_cast<uint8_t>(new_count & 0xFF)};
-    return SendInstruction(InstructionType::SetCurrentNum, param, 4U);
+    if (SendInstruction(InstructionType::SetCurrentNum, param, 4U))
+    {
+        cfg.zero_count = new_count;
+        return true;
+    }
+    else
+        return false;
 }
 
 void DisplacementSensor::OnFrame(const uint8_t *data, uint16_t len)

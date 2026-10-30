@@ -72,7 +72,7 @@ void SensorThread_Init(void)
      * 直接拿去做 sleep 会变成"让出 CPU 后立刻回来"的满速空转，把邮箱打爆，这里兜一下。 */
     const ULONG period = (sensor->cfg.poll_period_ms == 0U) ? 1U : sensor->cfg.poll_period_ms;
     uint8_t velocity_div = 0U;
-    sensor->SetZeroHard();
+    sensor->SetCurrentNum(1000U);
     for (;;)
     {
         /* 1) 查询模式（默认）下传感器不主动广播：这一拍不发读指令，下一拍就没有新帧 */
