@@ -118,10 +118,7 @@ public:
         uint16_t timeout_ms = 100;         ///< 超过这么久没应答判离线（≈3 个周期）
         float resolution_mm_per_count = 100.0/4096.0f;  ///< mm/count，见上方说明
         int8_t direction = 1;                    ///< 拉出为 +1；装反了改 -1，不用动代码
-        /* 手册建议预置 1000（≈98mm 反向余量）。注意代价：正向只剩 5120-1000=4120 counts
-         * ≈403mm。要把 500mm 全行程都算作正位移，就把它设 0（或全收绳后调 SetZero()）。*/
         uint32_t zero_count = 1000U;             ///< 零点基准计数
-        //float velocity_scale = 0.1/4096/;             ///< 0x0A 原始速度 → mm/s 的系数；**0 = 未标定，改用位置差分**
     };
 
     /* ---------------- 配置 ---------------- */
@@ -217,7 +214,7 @@ public:
 
     /**
      * @brief 改速度采样时间（0x0B 指令）。
-     * @param new_time 1~65535 ms，默认 1000ms。**注意单位是 ms，不是 s**。
+     * @param new_time 1~65535 ms，在Config 中默认设置成 1000ms（可修改）。**注意单位是 ms，不是 s**。
      * @retval true 已发出（切换结果看 last_status）
      */
     bool SetVelocitySampleTime(uint16_t new_time);
